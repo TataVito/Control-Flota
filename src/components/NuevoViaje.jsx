@@ -14,6 +14,7 @@ export default function NuevoViaje({ onGuardado }) {
   const [form, setForm] = useState({
     patente: '',
     chofer_id: '',
+    chofer2_id: '',
     km_salida: '',
     km_llegada: '',
     hora_salida: fechaHoraLocal(),
@@ -84,6 +85,7 @@ export default function NuevoViaje({ onGuardado }) {
       {
         patente: form.patente,
         chofer_id: form.chofer_id,
+        chofer2_id: form.chofer2_id || null,
         km_salida: Number(form.km_salida),
         km_llegada: form.km_llegada ? Number(form.km_llegada) : null,
         hora_salida: form.hora_salida || null,
@@ -157,6 +159,23 @@ export default function NuevoViaje({ onGuardado }) {
             </select>
           </div>
         </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Segundo chofer</label>
+            <select
+              name="chofer2_id"
+              value={form.chofer2_id}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
+            >
+              <option value="">-- Ninguno --</option>
+              {choferes.filter(c => c.id !== form.chofer_id).map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre} {c.rut ? `(${c.rut})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
 
         {/* Info del vehículo seleccionado */}
         {vehiculoSeleccionado && <VehiculoInfo vehiculo={vehiculoSeleccionado} />}

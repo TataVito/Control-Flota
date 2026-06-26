@@ -173,7 +173,7 @@ export default function ListaViajes() {
     setCargando(true)
     const { data } = await supabase
       .from('viajes')
-      .select('*, choferes (nombre, rut)')
+      .select('*, choferes!chofer_id (nombre, rut), chofer2:choferes!chofer2_id (nombre)')
       .order('hora_salida', { ascending: false })
       .limit(200)
     setViajes(data || [])
@@ -250,7 +250,10 @@ export default function ListaViajes() {
                         : '—'}
                     </td>
                     <td className="px-4 py-3 font-semibold text-brand">{v.patente}</td>
-                    <td className="px-4 py-3">{v.choferes?.nombre || '—'}</td>
+                    <td className="px-4 py-3">
+                      {v.choferes?.nombre || '—'}
+                      {v.chofer2?.nombre && <span className="text-gray-400 text-xs block">+{v.chofer2.nombre}</span>}
+                    </td>
                     <td className="px-4 py-3">{v.destino}</td>
                     <td className="px-4 py-3 text-right">{v.km_salida?.toLocaleString('es-CL')}</td>
                     <td className="px-4 py-3 text-right">

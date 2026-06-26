@@ -62,7 +62,7 @@ export default function Reporte() {
 
     let q = supabase
       .from('viajes')
-      .select('*, choferes(nombre)')
+      .select('*, choferes!chofer_id(nombre), chofer2:choferes!chofer2_id(nombre)')
       .gte('hora_salida', filtros.fechaDesde + 'T00:00:00')
       .lte('hora_salida', filtros.fechaHasta + 'T23:59:59')
       .order('hora_salida', { ascending: false })
@@ -93,8 +93,12 @@ export default function Reporte() {
 
   const kmPorChofer = viajes.reduce((acc, v) => {
     if (!v.km_llegada || !v.km_salida) return acc
+    const km = v.km_llegada - v.km_salida
     const nombre = v.choferes?.nombre || v.chofer_id
-    acc[nombre] = (acc[nombre] || 0) + (v.km_llegada - v.km_salida)
+    acc[nombre] = (acc[nombre] || 0) + km
+    if (v.chofer2?.nombre) {
+      acc[v.chofer2.nombre] = (acc[v.chofer2.nombre] || 0) + km
+    }
     return acc
   }, {})
 
@@ -126,11 +130,12 @@ export default function Reporte() {
 
     // Hoja detalle
     const detalleData = [
-      ['Fecha salida', 'Patente', 'Chofer', 'Destino', 'Motivo', 'Km salida', 'Km llegada', 'Km recorridos', 'Hora llegada', 'Observaciones'],
+      ['Fecha salida', 'Patente', 'Chofer', 'Segundo chofer', 'Destino', 'Motivo', 'Km salida', 'Km llegada', 'Km recorridos', 'Hora llegada', 'Observaciones'],
       ...viajes.map(v => [
         v.hora_salida ? new Date(v.hora_salida).toLocaleString('es-CL') : '',
         v.patente,
         v.choferes?.nombre || '',
+        v.chofer2?.nombre || '',
         v.destino,
         v.motivo || '',
         v.km_salida ?? '',
@@ -289,7 +294,10 @@ export default function Reporte() {
                         <tr key={v.id} className={`hover:bg-gray-50 ${!v.km_llegada ? 'bg-amber-50' : ''}`}>
                           <td className="px-4 py-2.5 whitespace-nowrap text-gray-500 text-xs">{fmtFecha(v.hora_salida)}</td>
                           <td className="px-4 py-2.5 font-semibold text-brand">{v.patente}</td>
-                          <td className="px-4 py-2.5">{v.choferes?.nombre || '—'}</td>
+                          <td className="px-4 py-2.5">
+                            {v.choferes?.nombre || '—'}
+                            {v.chofer2?.nombre && <span className="text-gray-400 text-xs block">+{v.chofer2.nombre}</span>}
+                          </td>
                           <td className="px-4 py-2.5">{v.destino}</td>
                           <td className="px-4 py-2.5 text-gray-500">{v.motivo || '—'}</td>
                           <td className="px-4 py-2.5 text-right">{v.km_salida?.toLocaleString('es-CL') || '—'}</td>

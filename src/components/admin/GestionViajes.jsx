@@ -20,6 +20,7 @@ function ModalEditar({ viaje, vehiculos, choferes, onCerrar, onGuardado }) {
   const [form, setForm] = useState({
     patente:      viaje.patente ?? '',
     chofer_id:    viaje.chofer_id ?? '',
+    chofer2_id:   viaje.chofer2_id ?? '',
     km_salida:    viaje.km_salida ?? '',
     km_llegada:   viaje.km_llegada ?? '',
     hora_salida:  toLocal(viaje.hora_salida),
@@ -62,6 +63,7 @@ function ModalEditar({ viaje, vehiculos, choferes, onCerrar, onGuardado }) {
     const { error: err } = await supabase.from('viajes').update({
       patente:      form.patente,
       chofer_id:    form.chofer_id,
+      chofer2_id:   form.chofer2_id || null,
       km_salida:    form.km_salida !== '' ? Number(form.km_salida) : null,
       km_llegada:   form.km_llegada !== '' ? Number(form.km_llegada) : null,
       hora_salida:  form.hora_salida || null,
@@ -114,6 +116,15 @@ function ModalEditar({ viaje, vehiculos, choferes, onCerrar, onGuardado }) {
                 {choferes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
               </select>
             </div>
+          </div>
+
+          {/* Segundo chofer */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Segundo chofer</label>
+            <select name="chofer2_id" value={form.chofer2_id} onChange={handleChange} className={inputCls}>
+              <option value="">-- Ninguno --</option>
+              {choferes.filter(c => c.id !== form.chofer_id).map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
           </div>
 
           {/* Destino y Motivo */}
@@ -205,7 +216,7 @@ export default function GestionViajes() {
   async function cargar() {
     setCargando(true)
     const [{ data: vj }, { data: vh }, { data: ch }] = await Promise.all([
-      supabase.from('viajes').select('*, choferes (nombre)').order('hora_salida', { ascending: false }).limit(200),
+      supabase.from('viajes').select('*, choferes!chofer_id (nombre), chofer2:choferes!chofer2_id (nombre)').order('hora_salida', { ascending: false }).limit(200),
       supabase.from('vehiculos').select('patente').order('patente'),
       supabase.from('choferes').select('id, nombre').order('nombre'),
     ])
@@ -266,7 +277,10 @@ export default function GestionViajes() {
                       : '—'}
                   </td>
                   <td className="px-4 py-3 font-semibold text-brand">{v.patente}</td>
-                  <td className="px-4 py-3">{v.choferes?.nombre || '—'}</td>
+                  <td className="px-4 py-3">
+                    {v.choferes?.nombre || '—'}
+                    {v.chofer2?.nombre && <span className="text-gray-400 text-xs block">+{v.chofer2.nombre}</span>}
+                  </td>
                   <td className="px-4 py-3">{v.destino}</td>
                   <td className="px-4 py-3 text-right">{v.km_salida?.toLocaleString('es-CL') || '—'}</td>
                   <td className="px-4 py-3 text-right">
