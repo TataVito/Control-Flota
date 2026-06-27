@@ -114,7 +114,23 @@ export default function NuevoViaje({ onGuardado }) {
         .update({ km_actuales: Number(form.km_llegada) })
         .eq('patente', form.patente)
     } else if (sinKmAnterior && form.km_salida) {
-      // Si el vehículo no tenía km de llegada anterior, guardar el km ingresado como referencia
+      // Registrar el km en el viaje anterior que quedó sin km_llegada
+      const { data: ultimoViaje } = await supabase
+        .from('viajes')
+        .select('id')
+        .eq('patente', form.patente)
+        .is('km_llegada', null)
+        .order('id', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (ultimoViaje) {
+        await supabase
+          .from('viajes')
+          .update({ km_llegada: Number(form.km_salida) })
+          .eq('id', ultimoViaje.id)
+      }
+
       await supabase
         .from('vehiculos')
         .update({ km_actuales: Number(form.km_salida) })
