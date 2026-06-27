@@ -46,19 +46,23 @@ export default function NuevoViaje({ onGuardado }) {
     setEsViajeInicial(false)
     if (!patente) return
 
-    const [{ data }, { count }] = await Promise.all([
+    const [{ data }, { data: ultimosViajes }] = await Promise.all([
       supabase.from('vehiculos').select('*').eq('patente', patente).single(),
-      supabase.from('viajes').select('id', { count: 'exact', head: true }).eq('patente', patente),
+      supabase.from('viajes').select('id, km_llegada').eq('patente', patente).order('id', { ascending: false }).limit(1),
     ])
 
     setVehiculoSeleccionado(data || null)
-    if (count === 0) {
+    const sinViajes = !ultimosViajes || ultimosViajes.length === 0
+    const ultimoViaje = ultimosViajes?.[0]
+
+    if (sinViajes) {
       setSinKmAnterior(true)
       setEsViajeInicial(true)
-    } else if (data?.km_actuales) {
-      setForm(f => ({ ...f, km_salida: data.km_actuales }))
-    } else {
+    } else if (!ultimoViaje?.km_llegada) {
       setSinKmAnterior(true)
+      setEsViajeInicial(false)
+    } else {
+      setForm(f => ({ ...f, km_salida: data?.km_actuales || ultimoViaje.km_llegada }))
     }
   }
 
