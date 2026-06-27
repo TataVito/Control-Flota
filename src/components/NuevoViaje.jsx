@@ -93,6 +93,21 @@ export default function NuevoViaje({ onGuardado }) {
     }
 
     setGuardando(true)
+
+    // Buscar el viaje anterior sin km_llegada ANTES de insertar el nuevo
+    let anteriorViajeId = null
+    if (sinKmAnterior && !esViajeInicial && form.km_salida) {
+      const { data: prev } = await supabase
+        .from('viajes')
+        .select('id')
+        .eq('patente', form.patente)
+        .is('km_llegada', null)
+        .order('id', { ascending: false })
+        .limit(1)
+        .single()
+      anteriorViajeId = prev?.id || null
+    }
+
     const { error: err } = await supabase.from('viajes').insert([
       {
         patente: form.patente,
@@ -121,23 +136,11 @@ export default function NuevoViaje({ onGuardado }) {
         .update({ km_actuales: Number(form.km_llegada) })
         .eq('patente', form.patente)
     } else if (sinKmAnterior && form.km_salida) {
-      if (!esViajeInicial) {
-        // Registrar el km en el viaje anterior que quedó sin km_llegada
-        const { data: ultimoViaje } = await supabase
+      if (anteriorViajeId) {
+        await supabase
           .from('viajes')
-          .select('id')
-          .eq('patente', form.patente)
-          .is('km_llegada', null)
-          .order('id', { ascending: false })
-          .limit(1)
-          .single()
-
-        if (ultimoViaje) {
-          await supabase
-            .from('viajes')
-            .update({ km_llegada: Number(form.km_salida) })
-            .eq('id', ultimoViaje.id)
-        }
+          .update({ km_llegada: Number(form.km_salida) })
+          .eq('id', anteriorViajeId)
       }
 
       await supabase
