@@ -10,6 +10,7 @@ export default function NuevoViaje({ onGuardado }) {
   const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState(null)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
+  const [sinKmAnterior, setSinKmAnterior] = useState(false)
 
   const [form, setForm] = useState({
     patente: '',
@@ -38,8 +39,9 @@ export default function NuevoViaje({ onGuardado }) {
   }
 
   async function handlePatenteChange(patente) {
-    setForm(f => ({ ...f, patente }))
+    setForm(f => ({ ...f, patente, km_salida: '' }))
     setVehiculoSeleccionado(null)
+    setSinKmAnterior(false)
     if (!patente) return
 
     const { data } = await supabase
@@ -51,6 +53,9 @@ export default function NuevoViaje({ onGuardado }) {
     setVehiculoSeleccionado(data || null)
     if (data?.km_actuales) {
       setForm(f => ({ ...f, km_salida: data.km_actuales }))
+      setSinKmAnterior(false)
+    } else {
+      setSinKmAnterior(true)
     }
   }
 
@@ -102,11 +107,17 @@ export default function NuevoViaje({ onGuardado }) {
       return
     }
 
-    // Actualizar km_actuales del vehículo si se ingresó km_llegada
+    // Actualizar km_actuales del vehículo
     if (form.km_llegada) {
       await supabase
         .from('vehiculos')
         .update({ km_actuales: Number(form.km_llegada) })
+        .eq('patente', form.patente)
+    } else if (sinKmAnterior && form.km_salida) {
+      // Si el vehículo no tenía km de llegada anterior, guardar el km ingresado como referencia
+      await supabase
+        .from('vehiculos')
+        .update({ km_actuales: Number(form.km_salida) })
         .eq('patente', form.patente)
     }
 
@@ -214,11 +225,23 @@ export default function NuevoViaje({ onGuardado }) {
           </div>
         </div>
 
+        {/* Alerta km de llegada anterior faltante */}
+        {sinKmAnterior && (
+          <div className="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 text-sm text-amber-800">
+            <p className="font-semibold mb-1">⚠ Vehículo no registra Km de llegada anterior</p>
+            <p>Ingresa el kilometraje actual del vehículo. Se registrará como Km de llegada anterior y como Km de salida de este viaje.</p>
+          </div>
+        )}
+
         {/* Kilometraje */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              Km salida <span className="text-red-500">*</span>
+              {sinKmAnterior ? (
+                <>Km actual del vehículo <span className="text-red-500">*</span></>
+              ) : (
+                <>Km salida <span className="text-red-500">*</span></>
+              )}
             </label>
             <input
               type="number"
@@ -226,7 +249,12 @@ export default function NuevoViaje({ onGuardado }) {
               value={form.km_salida}
               onChange={handleChange}
               min={0}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
+              placeholder={sinKmAnterior ? 'Ingresa el km actual del vehículo' : ''}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                sinKmAnterior
+                  ? 'border-amber-400 focus:ring-amber-300 bg-amber-50'
+                  : 'border-gray-300 focus:ring-brand/40'
+              }`}
             />
           </div>
 
