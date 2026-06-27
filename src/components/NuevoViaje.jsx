@@ -52,11 +52,11 @@ export default function NuevoViaje({ onGuardado }) {
     ])
 
     setVehiculoSeleccionado(data || null)
-    if (data?.km_actuales) {
-      setForm(f => ({ ...f, km_salida: data.km_actuales }))
-    } else if (count === 0) {
+    if (count === 0) {
       setSinKmAnterior(true)
       setEsViajeInicial(true)
+    } else if (data?.km_actuales) {
+      setForm(f => ({ ...f, km_salida: data.km_actuales }))
     } else {
       setSinKmAnterior(true)
     }
