@@ -69,14 +69,14 @@ export default function ControlVehiculos() {
     setCargando(true)
     const { data } = await supabase
       .from('vehiculos')
-      .select('patente, marca, modelo, tipo, km_actuales, vencimiento_revision_tecnica, vencimiento_permiso_circulacion, vencimiento_revision_gases, km_mantencion')
+      .select('patente, marca, modelo, tipo, km_actuales, vencimiento_seguro, vencimiento_revision_tecnica, vencimiento_permiso_circulacion, vencimiento_revision_gases, km_mantencion')
       .order('patente')
     setVehiculos(data || [])
     setCargando(false)
   }
 
   function tieneProblema(v) {
-    const fechas = [v.vencimiento_revision_tecnica, v.vencimiento_permiso_circulacion, v.vencimiento_revision_gases]
+    const fechas = [v.vencimiento_seguro, v.vencimiento_revision_tecnica, v.vencimiento_permiso_circulacion, v.vencimiento_revision_gases]
     const hayFechaVencida = fechas.some(f => estadoFecha(f) === 'vencido')
     const hayFechaProxima = fechas.some(f => estadoFecha(f) === 'proximo')
     const hayKmVencido = estadoKm(v.km_actuales, v.km_mantencion) === 'vencido'
@@ -89,12 +89,12 @@ export default function ControlVehiculos() {
   const lista = vehiculos.filter(tieneProblema)
 
   const contVencidos = vehiculos.filter(v => {
-    const fechas = [v.vencimiento_revision_tecnica, v.vencimiento_permiso_circulacion, v.vencimiento_revision_gases]
+    const fechas = [v.vencimiento_seguro, v.vencimiento_revision_tecnica, v.vencimiento_permiso_circulacion, v.vencimiento_revision_gases]
     return fechas.some(f => estadoFecha(f) === 'vencido') || estadoKm(v.km_actuales, v.km_mantencion) === 'vencido'
   }).length
 
   const contProximos = vehiculos.filter(v => {
-    const fechas = [v.vencimiento_revision_tecnica, v.vencimiento_permiso_circulacion, v.vencimiento_revision_gases]
+    const fechas = [v.vencimiento_seguro, v.vencimiento_revision_tecnica, v.vencimiento_permiso_circulacion, v.vencimiento_revision_gases]
     const tieneVencido = fechas.some(f => estadoFecha(f) === 'vencido') || estadoKm(v.km_actuales, v.km_mantencion) === 'vencido'
     if (tieneVencido) return false
     return fechas.some(f => estadoFecha(f) === 'proximo') || estadoKm(v.km_actuales, v.km_mantencion) === 'proximo'
@@ -145,11 +145,12 @@ export default function ControlVehiculos() {
         </div>
       ) : (
         <div className="overflow-x-auto bg-white rounded-xl shadow">
-          <table className="min-w-[800px] w-full text-sm">
+          <table className="min-w-[900px] w-full text-sm">
             <thead>
               <tr className="border-b text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">
                 <th className="px-4 py-3 whitespace-nowrap">Patente</th>
                 <th className="px-4 py-3 whitespace-nowrap">Vehículo</th>
+                <th className="px-4 py-3 whitespace-nowrap">SOAP</th>
                 <th className="px-4 py-3 whitespace-nowrap">Rev. Técnica</th>
                 <th className="px-4 py-3 whitespace-nowrap">Permiso Circ.</th>
                 <th className="px-4 py-3 whitespace-nowrap">Rev. Gases</th>
@@ -160,6 +161,7 @@ export default function ControlVehiculos() {
             <tbody className="divide-y divide-gray-100">
               {lista.map(v => {
                 const estados = [
+                  estadoFecha(v.vencimiento_seguro),
                   estadoFecha(v.vencimiento_revision_tecnica),
                   estadoFecha(v.vencimiento_permiso_circulacion),
                   estadoFecha(v.vencimiento_revision_gases),
@@ -172,6 +174,9 @@ export default function ControlVehiculos() {
                     <td className="px-4 py-3 whitespace-nowrap font-semibold text-brand">{v.patente}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">
                       {[v.marca, v.modelo].filter(Boolean).join(' ') || v.tipo || '—'}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <FechaBadge fecha={v.vencimiento_seguro} />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <FechaBadge fecha={v.vencimiento_revision_tecnica} />
