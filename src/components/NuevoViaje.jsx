@@ -61,6 +61,7 @@ export default function NuevoViaje({ onGuardado }) {
       hoy.setHours(0, 0, 0, 0)
       const alertas = []
       const checks = [
+        { campo: 'vencimiento_seguro', label: 'SOAP' },
         { campo: 'vencimiento_revision_tecnica', label: 'Revisión técnica' },
         { campo: 'vencimiento_permiso_circulacion', label: 'Permiso de circulación' },
         { campo: 'vencimiento_revision_gases', label: 'Revisión de gases' },
