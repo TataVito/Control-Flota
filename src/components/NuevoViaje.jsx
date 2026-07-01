@@ -145,8 +145,8 @@ export default function NuevoViaje({ onGuardado }) {
         chofer2_id: form.chofer2_id || null,
         km_salida: Number(form.km_salida),
         km_llegada: form.km_llegada ? Number(form.km_llegada) : null,
-        hora_salida: form.hora_salida || null,
-        hora_llegada: form.hora_llegada || null,
+        hora_salida: desdeInputLocal(form.hora_salida),
+        hora_llegada: desdeInputLocal(form.hora_llegada),
         destino: form.destino,
         motivo: form.motivo,
         numero_guia: form.motivo === 'Otro' ? (form.numero_guia || null) : null,
@@ -452,4 +452,10 @@ function fechaHoraLocal() {
   const now = new Date()
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
   return now.toISOString().slice(0, 16)
+}
+
+// El input datetime-local entrega la hora en el huso horario del navegador;
+// hay que convertirla a UTC real antes de guardarla en una columna timestamptz.
+function desdeInputLocal(value) {
+  return value ? new Date(value).toISOString() : null
 }

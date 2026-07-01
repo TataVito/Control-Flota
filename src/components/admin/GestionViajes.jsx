@@ -16,6 +16,12 @@ function fechaHoraLocal() {
   return now.toISOString().slice(0, 16)
 }
 
+// El input datetime-local entrega la hora en el huso horario del navegador;
+// hay que convertirla a UTC real antes de guardarla en una columna timestamptz.
+function desdeInputLocal(value) {
+  return value ? new Date(value).toISOString() : null
+}
+
 function ModalEditar({ viaje, vehiculos, choferes, onCerrar, onGuardado }) {
   const [form, setForm] = useState({
     patente:      viaje.patente ?? '',
@@ -66,8 +72,8 @@ function ModalEditar({ viaje, vehiculos, choferes, onCerrar, onGuardado }) {
       chofer2_id:   form.chofer2_id || null,
       km_salida:    form.km_salida !== '' ? Number(form.km_salida) : null,
       km_llegada:   form.km_llegada !== '' ? Number(form.km_llegada) : null,
-      hora_salida:  form.hora_salida || null,
-      hora_llegada: form.hora_llegada || null,
+      hora_salida:  desdeInputLocal(form.hora_salida),
+      hora_llegada: desdeInputLocal(form.hora_llegada),
       destino:      form.destino,
       motivo:       form.motivo || null,
       observaciones: form.observaciones || null,

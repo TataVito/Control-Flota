@@ -1,18 +1,26 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+// El input datetime-local trabaja en el huso horario del navegador;
+// estas funciones convierten entre esa hora local y el UTC real que guarda Supabase.
+function haciaInputLocal(fecha) {
+  const d = new Date(fecha)
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+  return d.toISOString().slice(0, 16)
+}
+
+function desdeInputLocal(value) {
+  return value ? new Date(value).toISOString() : null
+}
+
 function fechaHoraLocal() {
-  const now = new Date()
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-  return now.toISOString().slice(0, 16)
+  return haciaInputLocal(new Date())
 }
 
 function ModalEditar({ viaje, onCerrar, onGuardado }) {
   const [form, setForm] = useState({
     km_llegada: viaje.km_llegada ?? '',
-    hora_llegada: viaje.hora_llegada
-      ? new Date(viaje.hora_llegada).toISOString().slice(0, 16)
-      : '',
+    hora_llegada: viaje.hora_llegada ? haciaInputLocal(viaje.hora_llegada) : '',
     observaciones: viaje.observaciones ?? '',
   })
   const [guardando, setGuardando] = useState(false)
@@ -44,7 +52,7 @@ function ModalEditar({ viaje, onCerrar, onGuardado }) {
       .from('viajes')
       .update({
         km_llegada: form.km_llegada !== '' ? Number(form.km_llegada) : null,
-        hora_llegada: form.hora_llegada || null,
+        hora_llegada: desdeInputLocal(form.hora_llegada),
         observaciones: form.observaciones || null,
       })
       .eq('id', viaje.id)
