@@ -12,6 +12,7 @@ export default function NuevoViaje({ onGuardado }) {
   const [error, setError] = useState(null)
   const [sinKmAnterior, setSinKmAnterior] = useState(false)
   const [esViajeInicial, setEsViajeInicial] = useState(false)
+  const [alertasDocumentos, setAlertasDocumentos] = useState([])
 
   const [form, setForm] = useState({
     patente: '',
@@ -23,6 +24,7 @@ export default function NuevoViaje({ onGuardado }) {
     hora_llegada: '',
     destino: '',
     motivo: '',
+    numero_guia: '',
     observaciones: '',
   })
 
@@ -44,6 +46,7 @@ export default function NuevoViaje({ onGuardado }) {
     setVehiculoSeleccionado(null)
     setSinKmAnterior(false)
     setEsViajeInicial(false)
+    setAlertasDocumentos([])
     if (!patente) return
 
     const [{ data }, { data: ultimosViajes }] = await Promise.all([
@@ -52,6 +55,33 @@ export default function NuevoViaje({ onGuardado }) {
     ])
 
     setVehiculoSeleccionado(data || null)
+
+    if (data) {
+      const hoy = new Date()
+      hoy.setHours(0, 0, 0, 0)
+      const alertas = []
+      const checks = [
+        { campo: 'vencimiento_revision_tecnica', label: 'Revisión técnica' },
+        { campo: 'vencimiento_permiso_circulacion', label: 'Permiso de circulación' },
+        { campo: 'vencimiento_revision_gases', label: 'Revisión de gases' },
+      ]
+      for (const { campo, label } of checks) {
+        const fecha = data[campo]
+        if (fecha) {
+          const venc = new Date(fecha + 'T00:00:00')
+          const dias = Math.floor((venc - hoy) / 86400000)
+          if (dias < 0) alertas.push({ label, estado: 'vencido', fecha })
+          else if (dias <= 30) alertas.push({ label, estado: 'proximo', fecha })
+        }
+      }
+      if (data.km_mantencion != null && data.km_actuales != null) {
+        const diff = data.km_mantencion - data.km_actuales
+        if (diff <= 0) alertas.push({ label: 'Mantención', estado: 'vencido', km: data.km_mantencion })
+        else if (diff <= 1000) alertas.push({ label: 'Mantención', estado: 'proximo', km: data.km_mantencion })
+      }
+      setAlertasDocumentos(alertas)
+    }
+
     const sinViajes = !ultimosViajes || ultimosViajes.length === 0
     const ultimoViaje = ultimosViajes?.[0]
 
@@ -119,6 +149,7 @@ export default function NuevoViaje({ onGuardado }) {
         hora_llegada: form.hora_llegada || null,
         destino: form.destino,
         motivo: form.motivo,
+        numero_guia: form.motivo === 'Otro' ? (form.numero_guia || null) : null,
         observaciones: form.observaciones,
       },
     ])
@@ -219,6 +250,31 @@ export default function NuevoViaje({ onGuardado }) {
         {/* Info del vehículo seleccionado */}
         {vehiculoSeleccionado && <VehiculoInfo vehiculo={vehiculoSeleccionado} />}
 
+        {/* Alertas de documentos vencidos o próximos a vencer */}
+        {alertasDocumentos.length > 0 && (
+          <div className={`rounded-lg px-4 py-3 text-sm border ${
+            alertasDocumentos.some(a => a.estado === 'vencido')
+              ? 'bg-red-50 border-red-300 text-red-800'
+              : 'bg-amber-50 border-amber-300 text-amber-800'
+          }`}>
+            <p className="font-semibold mb-1">
+              {alertasDocumentos.some(a => a.estado === 'vencido')
+                ? '⛔ Este vehículo tiene documentos vencidos'
+                : '⚠ Este vehículo tiene documentos próximos a vencer'}
+            </p>
+            <ul className="list-disc list-inside space-y-0.5">
+              {alertasDocumentos.map((a, i) => (
+                <li key={i}>
+                  <span className="font-medium">{a.label}:</span>{' '}
+                  {a.estado === 'vencido' ? 'vencido' : 'vence pronto'}
+                  {a.fecha && ` (${new Date(a.fecha + 'T00:00:00').toLocaleDateString('es-CL')})`}
+                  {a.km != null && ` (a los ${a.km.toLocaleString('es-CL')} km)`}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Destino y Motivo */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -252,6 +308,21 @@ export default function NuevoViaje({ onGuardado }) {
             </select>
           </div>
         </div>
+
+        {/* Número de guía (solo cuando el motivo es "Otro") */}
+        {form.motivo === 'Otro' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Número de guía</label>
+            <input
+              type="text"
+              name="numero_guia"
+              value={form.numero_guia}
+              onChange={handleChange}
+              placeholder="Ej: 12345"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/40"
+            />
+          </div>
+        )}
 
         {/* Alerta km faltante */}
         {sinKmAnterior && (

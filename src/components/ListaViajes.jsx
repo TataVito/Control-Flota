@@ -224,17 +224,18 @@ export default function ListaViajes() {
         </div>
       ) : (
         <div className="overflow-x-auto bg-white rounded-xl shadow">
-          <table className="min-w-full text-sm">
+          <table className="min-w-[900px] w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                <th className="px-4 py-3">Fecha salida</th>
-                <th className="px-4 py-3">Patente</th>
-                <th className="px-4 py-3">Chofer</th>
-                <th className="px-4 py-3">Destino</th>
-                <th className="px-4 py-3">Km salida</th>
-                <th className="px-4 py-3">Km llegada</th>
-                <th className="px-4 py-3">Recorrido</th>
-                <th className="px-4 py-3">Motivo</th>
+                <th className="px-4 py-3 whitespace-nowrap">Fecha salida</th>
+                <th className="px-4 py-3 whitespace-nowrap">Patente</th>
+                <th className="px-4 py-3 whitespace-nowrap">Chofer</th>
+                <th className="px-4 py-3 whitespace-nowrap">Destino</th>
+                <th className="px-4 py-3 whitespace-nowrap">Km salida</th>
+                <th className="px-4 py-3 whitespace-nowrap">Km llegada</th>
+                <th className="px-4 py-3 whitespace-nowrap">Recorrido</th>
+                <th className="px-4 py-3 whitespace-nowrap">Motivo</th>
+                <th className="px-4 py-3 whitespace-nowrap">N° Guía</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -249,23 +250,24 @@ export default function ListaViajes() {
                         ? new Date(v.hora_salida).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' })
                         : '—'}
                     </td>
-                    <td className="px-4 py-3 font-semibold text-brand">{v.patente}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap font-semibold text-brand">{v.patente}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       {v.choferes?.nombre || '—'}
                       {v.chofer2?.nombre && <span className="text-gray-400 text-xs block">+{v.chofer2.nombre}</span>}
                     </td>
-                    <td className="px-4 py-3">{v.destino}</td>
-                    <td className="px-4 py-3 text-right">{v.km_salida?.toLocaleString('es-CL')}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 whitespace-nowrap">{v.destino}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">{v.km_salida?.toLocaleString('es-CL')}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
                       {v.km_llegada?.toLocaleString('es-CL') || (
                         <span className="text-amber-500 font-medium">Pendiente</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-green-700">
+                    <td className="px-4 py-3 whitespace-nowrap text-right font-medium text-green-700">
                       {kmRecorrido != null ? `${kmRecorrido.toLocaleString('es-CL')} km` : '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{v.motivo || '—'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap text-gray-500">{v.motivo || '—'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-gray-500">{v.numero_guia || '—'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <button
                         onClick={() => setViajeEditando(v)}
                         className="text-xs px-2 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
