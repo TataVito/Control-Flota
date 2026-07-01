@@ -3,10 +3,16 @@ import { supabase } from '../../lib/supabase'
 
 const TIPOS = ['Camión', 'Camioneta', 'Furgón', 'Minibús', 'Semi remolque', 'Otro']
 
+function fmtFecha(fecha) {
+  return fecha ? new Date(fecha + 'T00:00:00').toLocaleDateString('es-CL') : '—'
+}
+
 const VACIO = {
   patente: '', marca: '', modelo: '', anio: '', color: '',
   tipo: '', km_actuales: '', capacidad: '',
   vencimiento_seguro: '', vencimiento_revision_tecnica: '',
+  vencimiento_permiso_circulacion: '', vencimiento_revision_gases: '',
+  km_mantencion: '',
 }
 
 function Modal({ vehiculo, onCerrar, onGuardado }) {
@@ -19,6 +25,9 @@ function Modal({ vehiculo, onCerrar, onGuardado }) {
       capacidad: vehiculo.capacidad ?? '',
       vencimiento_seguro: vehiculo.vencimiento_seguro ?? '',
       vencimiento_revision_tecnica: vehiculo.vencimiento_revision_tecnica ?? '',
+      vencimiento_permiso_circulacion: vehiculo.vencimiento_permiso_circulacion ?? '',
+      vencimiento_revision_gases: vehiculo.vencimiento_revision_gases ?? '',
+      km_mantencion: vehiculo.km_mantencion ?? '',
     }
   )
   const [guardando, setGuardando] = useState(false)
@@ -44,6 +53,9 @@ function Modal({ vehiculo, onCerrar, onGuardado }) {
       capacidad: form.capacidad !== '' ? Number(form.capacidad) : null,
       vencimiento_seguro: form.vencimiento_seguro || null,
       vencimiento_revision_tecnica: form.vencimiento_revision_tecnica || null,
+      vencimiento_permiso_circulacion: form.vencimiento_permiso_circulacion || null,
+      vencimiento_revision_gases: form.vencimiento_revision_gases || null,
+      km_mantencion: form.km_mantencion !== '' ? Number(form.km_mantencion) : null,
     }
 
     setGuardando(true)
@@ -111,6 +123,18 @@ function Modal({ vehiculo, onCerrar, onGuardado }) {
             <label className="block text-xs font-medium text-gray-500 mb-1">Venc. rev. técnica</label>
             <input type="date" name="vencimiento_revision_tecnica" value={form.vencimiento_revision_tecnica} onChange={handleChange} className={inputCls} />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Venc. permiso circulación</label>
+            <input type="date" name="vencimiento_permiso_circulacion" value={form.vencimiento_permiso_circulacion} onChange={handleChange} className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Venc. revisión de gases</label>
+            <input type="date" name="vencimiento_revision_gases" value={form.vencimiento_revision_gases} onChange={handleChange} className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Km próxima mantención</label>
+            <input type="number" name="km_mantencion" value={form.km_mantencion} onChange={handleChange} placeholder="Ej: 150000" className={inputCls} />
+          </div>
         </div>
 
         {error && <p className="mx-5 mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
@@ -172,29 +196,35 @@ export default function GestionVehiculos() {
         <p className="text-sm text-gray-400 py-8 text-center">Cargando...</p>
       ) : (
         <div className="overflow-x-auto bg-white rounded-xl shadow">
-          <table className="min-w-full text-sm">
+          <table className="min-w-[1000px] w-full text-sm">
             <thead>
               <tr className="border-b text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">
-                <th className="px-4 py-3">Patente</th>
-                <th className="px-4 py-3">Marca / Modelo</th>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">Año</th>
-                <th className="px-4 py-3">Km</th>
-                <th className="px-4 py-3">Seg.</th>
-                <th className="px-4 py-3">Rev. Téc.</th>
+                <th className="px-4 py-3 whitespace-nowrap">Patente</th>
+                <th className="px-4 py-3 whitespace-nowrap">Marca / Modelo</th>
+                <th className="px-4 py-3 whitespace-nowrap">Tipo</th>
+                <th className="px-4 py-3 whitespace-nowrap">Año</th>
+                <th className="px-4 py-3 whitespace-nowrap">Km</th>
+                <th className="px-4 py-3 whitespace-nowrap">Seg.</th>
+                <th className="px-4 py-3 whitespace-nowrap">Rev. Téc.</th>
+                <th className="px-4 py-3 whitespace-nowrap">Permiso Circ.</th>
+                <th className="px-4 py-3 whitespace-nowrap">Rev. Gases</th>
+                <th className="px-4 py-3 whitespace-nowrap">Km Mantención</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {vehiculos.map(v => (
                 <tr key={v.patente} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-semibold text-brand">{v.patente}</td>
-                  <td className="px-4 py-3">{[v.marca, v.modelo].filter(Boolean).join(' ') || '—'}</td>
-                  <td className="px-4 py-3 text-gray-500">{v.tipo || '—'}</td>
-                  <td className="px-4 py-3">{v.anio || '—'}</td>
-                  <td className="px-4 py-3 text-right">{v.km_actuales?.toLocaleString('es-CL') || '—'}</td>
-                  <td className="px-4 py-3">{v.vencimiento_seguro ? new Date(v.vencimiento_seguro).toLocaleDateString('es-CL') : '—'}</td>
-                  <td className="px-4 py-3">{v.vencimiento_revision_tecnica ? new Date(v.vencimiento_revision_tecnica).toLocaleDateString('es-CL') : '—'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap font-semibold text-brand">{v.patente}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{[v.marca, v.modelo].filter(Boolean).join(' ') || '—'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-500">{v.tipo || '—'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{v.anio || '—'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-right">{v.km_actuales?.toLocaleString('es-CL') || '—'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{fmtFecha(v.vencimiento_seguro)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{fmtFecha(v.vencimiento_revision_tecnica)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{fmtFecha(v.vencimiento_permiso_circulacion)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{fmtFecha(v.vencimiento_revision_gases)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{v.km_mantencion != null ? v.km_mantencion.toLocaleString('es-CL') + ' km' : '—'}</td>
                   <td className="px-4 py-3 flex gap-2 justify-end">
                     <button onClick={() => setModal(v)}
                       className="text-xs px-2 py-1 rounded border border-gray-300 text-gray-500 hover:bg-gray-100">
