@@ -11,8 +11,9 @@ function Campo({ label, valor }) {
 function alertaVencimiento(fecha) {
   if (!fecha) return null
   const hoy = new Date()
-  const venc = new Date(fecha)
-  const dias = Math.ceil((venc - hoy) / (1000 * 60 * 60 * 24))
+  hoy.setHours(0, 0, 0, 0)
+  const venc = new Date(fecha + 'T00:00:00')
+  const dias = Math.floor((venc - hoy) / 86400000)
   if (dias < 0) return 'vencido'
   if (dias <= 30) return 'próximo'
   return null
@@ -31,7 +32,7 @@ function BadgeFecha({ label, fecha }) {
   return (
     <div className={`border rounded-lg px-3 py-2 ${color}`}>
       <p className="text-xs font-medium">{label}</p>
-      <p className="text-sm font-bold">{new Date(fecha).toLocaleDateString('es-CL')}</p>
+      <p className="text-sm font-bold">{new Date(fecha + 'T00:00:00').toLocaleDateString('es-CL')}</p>
       {alerta && (
         <p className="text-xs mt-0.5 font-semibold uppercase tracking-wide">{alerta}</p>
       )}
@@ -58,8 +59,10 @@ export default function VehiculoInfo({ vehiculo }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <BadgeFecha label="Vencimiento seguro" fecha={vehiculo.vencimiento_seguro} />
+        <BadgeFecha label="Vencimiento seguro (SOAP)" fecha={vehiculo.vencimiento_seguro} />
         <BadgeFecha label="Revisión técnica" fecha={vehiculo.vencimiento_revision_tecnica} />
+        <BadgeFecha label="Permiso de circulación" fecha={vehiculo.vencimiento_permiso_circulacion} />
+        <BadgeFecha label="Revisión de gases" fecha={vehiculo.vencimiento_revision_gases} />
       </div>
     </div>
   )
